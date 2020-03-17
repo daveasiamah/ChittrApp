@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet, Alert, SectionList, SafeAreaView} from 'react-native';
+import { Text, View, TouchableOpacity, StyleSheet, SectionList, SafeAreaView} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 
 class FollowersPage extends Component
@@ -21,18 +21,19 @@ class FollowersPage extends Component
 	{
 		this.followersReload = this.props.navigation.addListener('focus', () =>
 		{
-			this.findFollowers().then(null);
+			this.findFollowing().then(null);
 		});
 	}
 
-	componentWillUnmount() {
+	componentWillUnmount()
+	{
 		this.followersReload();
 	}
 
 	render(){
 		return(
 			<View>
-				<Text style={styles.title}>Followers</Text>
+				<Text style={styles.title}>Following</Text>
 				<Text style={styles.noResultMessage}>{this.state.noResult}</Text>
 				<SafeAreaView style={styles.scrollable}>
 					<SectionList
@@ -66,7 +67,7 @@ class FollowersPage extends Component
 
 			await AsyncStorage.setItem('searchId', "" + searchId);
 
-			console.log("DEBUG: Success, navigating to AccountPage");
+			console.log("DEBUG: Success, navigating to users page");
 			this.props.navigation.navigate('UsersPage');
 		}
 		catch (e)
@@ -75,9 +76,9 @@ class FollowersPage extends Component
 		}
 	}
 
-	async findFollowers()
+	async findFollowing()
 	{
-		console.log("DEBUG: finding followers");
+		console.log("DEBUG: search button pressed");
 
 		let userId = await this.getId();
 
@@ -88,7 +89,7 @@ class FollowersPage extends Component
 		}
 
 		console.log("UserID:" + userId);
-		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + userId + "/followers";
+		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + userId + "/following";
 
 			return fetch(url)
 			.then((response) =>
@@ -114,6 +115,7 @@ class FollowersPage extends Component
 				{
 					console.log("DEBUG: No users were found");
 					this.state.sections = "";
+					this.state.noResult = "No followers yet";
 				}
 			})
 			.catch((error) =>
@@ -145,11 +147,6 @@ class FollowersPage extends Component
 			item = users[i].given_name + " " + users[i].family_name + "\n" + users[i].email;
 
 			items.push(item);
-		}
-
-		if(length === 0)
-		{
-			this.state.noResult = "No followers yet";
 		}
 
 		response = [{data: items}];

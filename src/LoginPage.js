@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, Button, StyleSheet} from 'react-native';
+import {Text, View, TextInput, Button, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 
 class LoginPage extends Component
@@ -7,13 +7,13 @@ class LoginPage extends Component
 	constructor(props)
 	{
 		super(props);
-		
+
 		this.state={
 			email: '',
 			password: ''
 		}
 	}
-	
+
 	render(){
 		return(
 			<View>
@@ -29,12 +29,12 @@ class LoginPage extends Component
 				onChangeText={password_data => this.setState({password:password_data})}
 				placeholder={"password"}
 			/>
-			<Button 
+			<Button
 				style={styles.loginButton}
 				title='Login'
 				onPress={() => this.submitLogin()}
 			/>
-			<Button 
+			<Button
 				style={styles.loginButton}
 				title='Sign up'
 				onPress={() => this.props.navigation.navigate('RegisterPage')}
@@ -42,43 +42,43 @@ class LoginPage extends Component
 			</View>
 		);
 	}
-	
+
 	async storeLogin()
 	{
-		try 
+		try
 		{
 			let id = "" + this.state.id;
 			let token = "" + this.state.token;
-			
+
 			console.log("DEBUG: Storing ID: " + id + " Storing token: " + token);
-			
+
 			await AsyncStorage.setItem('id', id);
 			await AsyncStorage.setItem('token', token);
-		
+
 			console.log("DEBUG: Success, navigating to ChitsPage");
-			this.props.navigation.navigate('ChitsPage');
-		} 
-		catch (e) 
+			this.props.navigation.navigate('Home');
+		}
+		catch (e)
 		{
 			console.log("DEBUG: Failed to store id and token: " + e);
 		}
 	}
-	
+
 	submitLogin()
 	{
 		console.log("DEBUG: Submit login button pressed");
-		
+
 		let jsonData = JSON.stringify({
 				email:this.state.email,
 				password:this.state.password
 			});
-		
+
 		console.log("DEBUG: JsonData: " + jsonData);
-		
+
 		return fetch("http://10.0.2.2:3333/api/v0.0.5/login/",
 		{
 			method:'POST',
-			headers: 
+			headers:
 			{
 				Accept: 'application/json',
 				'Content-Type': 'application/json'
@@ -86,8 +86,8 @@ class LoginPage extends Component
 			body: jsonData
 		})
 		.then((response) =>
-		{	
-			if(response.status != 200)
+		{
+			if(response.status !== 200)
 			{
 				throw "Response was: " + response.status;
 			}
@@ -98,13 +98,13 @@ class LoginPage extends Component
 			console.log("DEBUG: ResponseJson: " + responseJson);
 			let idRequest = (responseJson)['id'];
 			let tokenRequest = (responseJson)['token'];
-			
-			console.log("DEBUG: id receieved: " + idRequest +" token recieved " + tokenRequest);
-			
+
+			console.log("DEBUG: id received: " + idRequest +" token received " + tokenRequest);
+
 			this.setState({id:idRequest});
 			this.setState({token:tokenRequest});
-			
-			this.storeLogin();
+
+			this.storeLogin().then();
 		})
 		 .catch((error) =>
 		 {

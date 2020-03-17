@@ -1,26 +1,25 @@
 import React, { Component } from 'react';
 import { Text, View, TextInput, Button, StyleSheet, Alert} from 'react-native';
-import AsyncStorage from '@react-native-community/async-storage';
 
 class RegisterPage extends Component
 {
 	constructor(props)
 	{
 		super(props);
-		
+
 		this.state={
 			given_name: '',
 			family_name: '',
 			email: '',
 			password: '',
 			error: ''}
-			
+
 	}
-	
+
 	render(){
 		return(
 			<View style={styles.container}>
-			<Text>Reigster</Text>
+			<Text>Register</Text>
 			<Text style={styles.error} >{this.state.error}</Text>
 			<TextInput
 				style={styles.Input}
@@ -42,12 +41,12 @@ class RegisterPage extends Component
 				onChangeText={password_data => this.setState({password:password_data})}
 				placeholder={"password"}
 			/>
-			<Button 
+			<Button
 				style={styles.loginButton}
 				title='Login'
 				onPress={() => this.submitLogin()}
 			/>
-			<Button 
+			<Button
 				style={styles.loginButton}
 				title='Already have an account?'
 				onPress={() => this.props.navigation.navigate('LoginPage')}
@@ -58,20 +57,20 @@ class RegisterPage extends Component
 	submitLogin()
 	{
 		console.log("Submit login button pressed");
-		
+
 		let jsonData = JSON.stringify({
 				given_name:this.state.given_name,
 				family_name:this.state.family_name,
 				email:this.state.email,
 				password:this.state.password
 			});
-			
+
 		console.log("JsonData: " + jsonData);
-		
+
 		return fetch("http://10.0.2.2:3333/api/v0.0.5/user/",
 		{
 			method:'POST',
-			headers: 
+			headers:
 			{
 				Accept: 'application/json',
 				'Content-Type': 'application/json'
@@ -101,7 +100,7 @@ class RegisterPage extends Component
 export default RegisterPage;
 const styles = StyleSheet.create(
 	{
-		container: 
+		container:
 		{
 			flex: 1,
 		},

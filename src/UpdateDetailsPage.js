@@ -2,19 +2,19 @@ import React, { Component } from 'react';
 import { Text, View, TextInput, Button, StyleSheet, Alert} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 
-class RegisterPage extends Component
+class UpdateDetailsPage extends Component
 {
 	constructor(props)
 	{
 		super(props);
-		
+
 		this.state={
 			given_name: '',
 			family_name: '',
 			email: '',
 			password: ''}
 	}
-	
+
 	render(){
 		return(
 			<View style={styles.container}>
@@ -40,7 +40,7 @@ class RegisterPage extends Component
 				onChangeText={password_data => this.setState({password:password_data})}
 				placeholder={"password"}
 			/>
-			<Button 
+			<Button
 				style={styles.loginButton}
 				title='Update'
 				onPress={() => this.submitUpdate()}
@@ -51,25 +51,25 @@ class RegisterPage extends Component
 	async submitUpdate()
 	{
 		console.log("DEBUG: Update details button pressed");
-		
+
 		let jsonData = JSON.stringify({
 				given_name:this.state.given_name,
 				family_name:this.state.family_name,
 				email:this.state.email,
 				password:this.state.password
 			});
-			
+
 		let id = await this.getId();
 		let token = await this.getToken();
-		
+
 		console.log("DEBUG: JsonData: " + jsonData);
 		console.log("DEBUG: id: " + id);
 		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + id;
-		
+
 		return fetch(url,
 		{
 			method:'PATCH',
-			headers: 
+			headers:
 			{
 				Accept: 'application/json',
 				'Content-Type': 'application/json',
@@ -77,7 +77,7 @@ class RegisterPage extends Component
 			},
 			body: jsonData
 		})
-		.then((response) => 
+		.then((response) =>
 		{
 			if(response.status === 201)
 			{
@@ -97,16 +97,16 @@ class RegisterPage extends Component
 			console.log("DEBUG: " + error);
 		 });
 	}
-	
+
 	async getId()
 	{
-		try 
+		try
 		{
 			const id = await AsyncStorage.getItem('id');
 			console.log("DEBUG: id found: " + id);
 			return "" + id;
 		}
-		catch (e) 
+		catch (e)
 		{
 			console.log("DEBUG: Failed to get id: " + e);
 			this.props.navigation.navigate('LoginPage');
@@ -114,13 +114,13 @@ class RegisterPage extends Component
 	}
 	async getToken()
 	{
-		try 
+		try
 		{
 			const token = await AsyncStorage.getItem('token');
-			console.log("DEBUG: token found: " + token); 
+			console.log("DEBUG: token found: " + token);
 			return "" + token;
 		}
-		catch (e) 
+		catch (e)
 		{
 			console.log("DEBUG: Failed to get id: " + e);
 			this.props.navigation.navigate('LoginPage');
@@ -128,10 +128,10 @@ class RegisterPage extends Component
 	}
 }
 
-export default RegisterPage;
+export default UpdateDetailsPage;
 const styles = StyleSheet.create(
 	{
-		container: 
+		container:
 		{
 			flex: 1,
 		},

@@ -1,13 +1,13 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, TouchableOpacity, StyleSheet, Alert, SectionList, SafeAreaView, Button} from 'react-native';
+import { Text, View, TextInput, TouchableOpacity, StyleSheet, SectionList, SafeAreaView, Button} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 
-class UsersPage extends Component
+class UserSearchPage extends Component
 {
 	constructor(props)
 	{
 		super(props);
-		
+
 		this.state=
 		{
 			search: '',
@@ -16,7 +16,7 @@ class UsersPage extends Component
 			sections: ''
 		}
 	}
-	
+
 	render(){
 		return(
 			<View>
@@ -30,11 +30,11 @@ class UsersPage extends Component
 						<Button
 							style={styles.searchButton}
 							title='Search'
-							onPress={() => 
+							onPress={() =>
 							{
-								if(this.state.search != "")
+								if(this.state.search !== "")
 								{
-									this.searchUser();
+									this.searchUser().then();
 								}
 								else
 								{
@@ -46,16 +46,16 @@ class UsersPage extends Component
 					</View>
 				</View>
 				<Text style={styles.noResultMessage}>{this.state.noResult}</Text>
-				<SafeAreaView style={styles.scrollable}>			
+				<SafeAreaView style={styles.scrollable}>
 					<SectionList
 						sections = {this.state.sections}
 						keyExtractor = {(item, index) => index.toString()}
-						renderItem = {({item, index}) => 
+						renderItem = {({item, index}) =>
 							<TouchableOpacity
 								style={styles.followContainer}
 								onPress={() =>
 								{
-									this.openProfile("" + index);
+									this.openProfile("" + index).then();
 								}}
  							>
 								<Text>{item}</Text>
@@ -66,47 +66,47 @@ class UsersPage extends Component
 			</View>
 		);
 	}
-	
+
 	async openProfile(index)
 	{
 		let users =  this.state.users;
 		let searchId = users[index].user_id;
-		
-		try 
+
+		try
 		{
 			console.log("DEBUG: Storing searchId: " + searchId);
-			
+
 			await AsyncStorage.setItem('searchId', "" + searchId);
-		
+
 			console.log("DEBUG: Success, navigating to AccountPage");
-			this.props.navigation.navigate('AccountPage');
-		} 
-		catch (e) 
+			this.props.navigation.navigate('UsersPage');
+		}
+		catch (e)
 		{
 			console.log("DEBUG: Failed to store searchId: " + e);
 		}
 	}
-	
+
 	async searchUser()
 	{
 		console.log("DEBUG: search button pressed");
-		
+
 		let url = "http://10.0.2.2:3333/api/v0.0.5/search_user?" + "q=" + this.state.search;
-		
+
 		return fetch(url)
-		.then((response) => 
+		.then((response) =>
 		{
-			if(response.status != 200)
+			if(response.status !== 200)
 			{
 				throw "Response was: " + response.status;
 			}
-			
+
 			return response.json();
 		})
-		.then((responseJson) => 
+		.then((responseJson) =>
 		{
 			console.log("DEBUG: Response: " + responseJson);
-			if(typeof responseJson != 'undefined' && responseJson != "")
+			if(typeof responseJson != 'undefined' && responseJson !== "")
 			{
 				console.log("DEBUG: At least one user was found");
 				this.state.noResult = "";
@@ -127,120 +127,37 @@ class UsersPage extends Component
 			console.log("DEBUG: " + error);
 		});
 	}
-	
-	async followUser(listId)
-	{
-		console.log("DEBUG: follow button pressed, index: " + listId);
-		
-		let userId = await this.getId();
-		let token = await this.getToken();
-		let users = this.state.users;
-		let followId = users[listId].user_id;
-		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + followId +"/follow";
-		
-		return fetch(url, 
-		{
-			method:'POST',
-			headers:
-			{
-				'id': userId,
-				'X-Authorization': token
-			}
-		})
-		.then((response) => 
-		{
-			if(response.status != 200)
-			{
-				throw "Response was: " + response.status;
-			}
-			
-			return response.json();
-		})
-		.then((responseJson) => 
-		{
-			console.log("DEBUG: Response: " + responseJson);
-			if(typeof responseJson != 'undefined' && responseJson != "")
-			{
-				console.log("DEBUG: At least one user was found");
-				this.state.noResult = "";
-				this.state.users = responseJson;
-				this.getSections();
-			}
-			else
-			{
-				console.log("DEBUG: No users were found");
-				this.state.sections = "";
-				this.state.noResult = "No results found";
-			}
-		})
-		.catch((error) =>
-		{
-			this.state.sections = "";
-			this.state.noResult = "No results found";
-			console.log("DEBUG: " + error);
-		});
-	}
-	
 	async getSections()
 	{
 		console.log("DEBUG: Creating sections list");
-		
+
 		let users = this.state.users;
-		
+
 		//needs one extra to see if there is another page
 		let length =  Object.keys(users).length;
-		let response = [];
+		let response;
 		let items = [];
 		let item;
-		
+
 		console.log("DEBUG: Users: " + JSON.stringify(users));
-		
+
 		for(let i = 0; i < length; i++)
 		{
 			this.state.noResult = "";
-			
+
 			item = users[i].given_name + " " + users[i].family_name;
-			
+
 			items.push(item);
 		}
-		
+
 		response = [{data: items}];
-		
+
 		//update the page with the users once done
 		this.setState({sections: response});
 	}
-	
-	async getId()
-	{
-		try 
-		{
-			const id = await AsyncStorage.getItem('id');
-			console.log("DEBUG: id found: " + id);
-			return "" ;
-		}
-		catch (e)
-		{
-			console.log("DEBUG: Failed to get id: " + e);
-			this.props.navigation.navigate('LoginPage');
-		}
-	}
-	async getToken()
-	{
-		try 
-		{
-			const token = await AsyncStorage.getItem('token');
-			console.log("DEBUG: token found: " + token); 
-			return "" + token;
-		}
-		catch (e) 
-		{
-			console.log("DEBUG: Failed to get id: " + e);
-			this.props.navigation.navigate('LoginPage');
-		}
-	}
 }
 
-export default RegisterPage;
+export default UserSearchPage;
 const styles = StyleSheet.create(
 	{
 		error:
@@ -272,7 +189,7 @@ const styles = StyleSheet.create(
 			marginLeft: 10,
 			marginRight: 10
 		},
-		scrollable: 
+		scrollable:
 		{
 			marginHorizontal: 40,
 			marginBottom: 200
@@ -292,6 +209,6 @@ const styles = StyleSheet.create(
 		},
 		followButton:
 		{
-			
+
 		}
 	});

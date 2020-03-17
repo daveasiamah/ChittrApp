@@ -1,33 +1,42 @@
 import React, { Component } from 'react';
 import { Text, View, TextInput, Button, StyleSheet, SectionList, SafeAreaView} from 'react-native';
-import AsyncStorage from '@react-native-community/async-storage';
 
 class ChitsPage extends Component
 {
 	constructor(props)
 	{
 		super(props);
-		
+
 		this.state={
 			chitsStart: 0,
 			chitsCount: 4,
 			chits: '',
 			chitNext: false
 		};
-		
-		this.getChits();
 	}
-	
+
+	componentDidMount()
+	{
+		this.followersReload = this.props.navigation.addListener('focus', () =>
+		{
+			this.getChits().then(null);
+		});
+	}
+
+	componentWillUnmount() {
+		this.followersReload();
+	}
+
 	render(){
 		return(
 		<View>
 			<View style={styles.buttons}>
-				<Button 
+				<Button
 					title='Prev'
-					onPress={() => 
+					onPress={() =>
 					{
 						console.log("DEBUG: Button prev pressed");
-						
+
 						if(this.state.chitsStart >0)
 						{
 							if(this.state.chitsStart > 5)
@@ -42,14 +51,14 @@ class ChitsPage extends Component
 						this.getChits();
 					}}
 				/>
-				<Button 
+				<Button
 					title='Next'
-					onPress={() => 
+					onPress={() =>
 					{
 						console.log("DEBUG: Button next pressed");
 						//needs to check how many chits are displayed
 						let length =  Object.keys(this.state.chits).length;
-						
+
 						if(this.state.chitNext === true)
 						{
 							this.state.chitsStart += this.state.chitsCount;
@@ -59,39 +68,48 @@ class ChitsPage extends Component
 					}}
 				/>
 			</View>
-				<SafeAreaView style={styles.scrollable}>			
+				<SafeAreaView style={styles.scrollable}>
 					<SectionList
 						sections = {this.state.sections}
 						keyExtractor = {(item, index) => index}
 						renderItem = {({item}) => <Text>{item}</Text>}
 					/>
 				</SafeAreaView>
+			<Button
+				title='Make Chit'
+				style={styles.postChitButton}
+				onPress={() =>
+				{
+					console.log("DEBUG: Make Chit button pressed");
+					this.props.navigation.navigate("PostChitPage");
+				}}
+			/>
 		</View>
 	);}
-	
+
 	async getChits()
 	{
 		console.log("DEBUG: Getting chits");
-		
+
 		//needs one extra chit to see if there is another page
-		return fetch("http://10.0.2.2:3333/api/v0.0.5/chits?start=" + 
+		return fetch("http://10.0.2.2:3333/api/v0.0.5/chits?start=" +
 			this.state.chitsStart + "&count=" + this.state.chitsCount +1)
 		.then((response) =>
 		{
 			console.log("DEBUG: Response code: " + response.status);
 			//show the chits
-			if(response.status != 200)
+			if(response.status !== 200)
 			{
 				throw "Response was: " + response.status;
 			}
-			
+
 			return response.json();
 		})
 		.then((responseJson) =>
 		{
-			
+
 			this.setState({chits: responseJson});
-			
+
 			//display the data
 			this.getSections();
 		})
@@ -103,17 +121,17 @@ class ChitsPage extends Component
 	async getSections()
 	{
 		console.log("DEBUG: Creating sections list");
-		
+
 		let chits = this.state.chits;
-		
+
 		//needs one extra to see if there is another page
 		let length =  Object.keys(chits).length;
 		let response = [];
 		//false by default
 		this.state.chitNext = false;
-		
+
 		console.log("DEBUG: Chits: " + JSON.stringify(chits));
-		
+
 		for(let i = 0; i < length; i++)
 		{
 			//dont display last chit, it was only collected to find if there is another page
@@ -129,14 +147,16 @@ class ChitsPage extends Component
 						chits[i].user.family_name,
 						chits[i].user.email]
 					});
-					
+
 					//chit itself
+					let timeStamp = new Date(chits[i].timestamp);
+					timeStamp = timeStamp.toUTCString();
 					response.push(
 					{
 						data:[chits[i].chit_content,
 						chits[i].location.longitude,
 						chits[i].location.latitude,
-						chits[i].timestamp]
+						timeStamp]
 					});
 				}
 				else
@@ -149,7 +169,7 @@ class ChitsPage extends Component
 						chits[i].user.family_name,
 						chits[i].user.email]
 					});
-					
+
 					//chit itself without location data
 					response.push(
 						{data:[chits[i].chit_content,
@@ -179,11 +199,18 @@ const styles = StyleSheet.create(
 		{
 			flexDirection: 'row',
 			margin: 20,
-			justifyContent: 'space-between'
+			justifyContent: 'space-between',
 		},
-		scrollable: 
+		postChitButton:
+		{
+			position: 'absolute',
+			width: '90%',
+			marginBottom: 0,
+		},
+		scrollable:
 		{
 			marginHorizontal: 40,
-			marginBottom: 200
+			marginBottom: 10,
+			height: '80%',
 		},
 	});
