@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, StyleSheet, SectionList, Image, TouchableOpacity} from 'react-native';
+import { Text, View, StyleSheet, SectionList, Image, Button} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import RNFetchBlob from 'react-native-fetch-blob';
 
@@ -20,6 +20,7 @@ class AccountPage extends Component
 			errorPhoto: '',
 			photo: null,
 			token: null,
+			sections: '',
 			};
 	}
 
@@ -28,6 +29,11 @@ class AccountPage extends Component
 		//if focused reload the details
 		this.accountReload = this.props.navigation.addListener('focus', () =>
 		{
+			//if a photo has been passed update the photo
+			if(this.props.route.params?.photo)
+			{
+				this.updateProfilePhoto(this.props.route.params.photo).then();
+			}
 			this.getDetails().then();
 		});
 	}
@@ -43,19 +49,37 @@ class AccountPage extends Component
 			<View style={styles.container}>
 				<Text style={styles.title}>User Details</Text>
 				<Image
-					style={{width:100,height:100,resizeMode: 'contain'}}
+					style={styles.profilePhoto}
 					source={{uri:this.state.photo}}
 				/>
-				<Text>{this.state.errorPhoto}</Text>
-				<Text>Forename: {this.state.forename}</Text>
-				<Text>Surname: {this.state.surname}</Text>
-				<Text>Email: {this.state.email}</Text>
-				<SectionList
-					sections = {this.state.sections}
-					keyExtractor = {(item, index) => index}
-					renderItem = {({item}) => <Text>{item}</Text>}
-					renderSectionHeader = {() => <Text>Chit</Text>}
+				<Button
+					style={styles.changePhotoButton}
+					title={'Change Photo'}
+					onPress={() =>this.props.navigation.navigate('CameraPage', {profile: 'true'})}
 				/>
+				<Text>{this.state.errorPhoto}</Text>
+				<View style={styles.detailsFlex}>
+					<View>
+						<Text>Forename: {this.state.forename}</Text>
+						<Text>Surname: {this.state.surname}</Text>
+						<Text>Email: {this.state.email}</Text>
+					</View>
+					<View style={styles.updateButton}>
+						<Button title={'Update Details'} onPress={() => this.props.navigation.navigate('UpdateDetailsPage')}/>
+					</View>
+				</View>
+				<View style={styles.sectionListContainer}>
+					<SectionList
+						sections = {this.state.sections}
+						keyExtractor = {(item, index) => index}
+						renderItem = {({item}) => <Text>{item}</Text>}
+						renderSectionFooter={({section: {title}}) =>
+							<Image
+								style={{width: 60, height: 60, resizeMode: 'contain'}}
+								source={{uri: title}}
+							/>}
+					/>
+				</View>
 			</View>
 		);
 	}
@@ -75,36 +99,21 @@ class AccountPage extends Component
 		}
 	}
 
-	async getToken()
-	{
-		try
-		{
-			const token = await AsyncStorage.getItem('token');
-			console.log("DEBUG: token found: " + token);
-			return "" + token;
-		}
-		catch (e)
-		{
-			console.log("DEBUG: Failed to get id: " + e);
-			this.props.navigation.navigate('Logout');
-		}
-	}
-
 	async getDetails()
 	{
 		console.log("DEBUG: Getting user details");
 		this.setState({userId: await this.getId()});
-		let id = this.state.userId;
+		let userId = this.state.userId;
 
-		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + id;
+		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + userId;
 
-		console.log("DEBUG: Opening details for account user ID: " + id);
+		console.log("DEBUG: Opening details for account user ID: " + userId);
 		return fetch(url)
 		.then((response) =>
 		{
 			if(response.status !== 200)
 			{
-				return Promise.reject("DEBUG: Failed to get details for user: " + id + " Response code: " + response.status);
+				throw("DEBUG: Failed to get details for user: " + userId + " Response code: " + response.status);
 			}
 			else
 			{
@@ -113,34 +122,79 @@ class AccountPage extends Component
 		})
 		.then((responseJson) =>
 		{
-			let userId = (responseJson)['user_id'];
 			let forename = (responseJson)['given_name'];
 			let surname = (responseJson)['family_name'];
 			let email = (responseJson)['email'];
-			let recentChits = (responseJson)['recent_chits'];
 
-			if(this.state.searchId !== -1)
-			{
-				this.setState({searchId:userId});
-			}
-			else
-			{
-				this.setState({userId:userId});
-			}
+			this.setState({userId:userId});
 			this.setState({forename:forename});
 			this.setState({surname:surname});
 			this.setState({email:email});
 			this.setState({recentChits:responseJson});
 
 			console.log('DEBUG: userId: ' + userId + ' forename: ' + forename + ' surname: ' + surname + ' email: ' + email);
-			this.getPhoto(id);
-			this.getFollowing();
+			this.getPhoto(userId);
+			this.getSections((responseJson)['recent_chits'])
 		})
 		.catch((response) =>
 		{
 			this.state.errorData = response;
 			console.log(response);
 		});
+	}
+
+	async getSections(chits)
+	{
+		console.log("DEBUG: Creating sections list");
+
+		let length =  Object.keys(chits).length;
+		let response = [];
+
+		console.log("DEBUG: Chits: " + JSON.stringify(chits));
+
+		//only show the top 10 newest
+		if(length > 10)
+		{
+			length = 10;
+		}
+
+		for(let i = 0; i < length; i++)
+		{
+			if(chits[i].hasOwnProperty('location'))
+			{
+				//chit itself
+				let timeStamp = await new Date(chits[i].timestamp);
+				timeStamp = timeStamp.toUTCString();
+				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+				console.log("DEBUG: Image: "+ image);
+				response.push(
+					{
+						title:image,
+						data:[chits[i].chit_content,
+							chits[i].location.longitude,
+							chits[i].location.latitude,
+							timeStamp,]
+					})
+			}
+			else
+			{
+
+				//chit itself without location data
+				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+
+				console.log("DEBUG: Image: "+ image);
+				response.push(
+					{
+						title:image,
+						data:[chits[i].chit_content,
+							chits[i].timestamp]
+					});
+			}
+		}
+		this.setState(
+			{
+				sections:response
+			});
 	}
 
 	async getPhoto(id)
@@ -163,6 +217,45 @@ class AccountPage extends Component
 			console.log(message);
 		});
 	}
+
+	async updateProfilePhoto(photo)
+	{
+		console.log("DEBUG: Updating user photo");
+
+		let token = await this.getToken();
+		let url = "http://10.0.2.2:3333/api/v0.0.5/user/photo";
+
+		fetch(url,
+	{
+			method: 'POST',
+			headers:
+			{
+				'X-Authorization': token,
+				'Content-Type': 'application/octet-stream',
+			},
+			body: photo,
+		})
+		.catch((response) =>
+		{
+			this.state.errorPhoto = response;
+			console.log(response);
+		});
+	}
+
+	async getToken()
+	{
+		try
+		{
+			const token = await AsyncStorage.getItem('token');
+			console.log("DEBUG: token found: " + token);
+			return "" + token;
+		}
+		catch (e)
+		{
+			console.log("DEBUG: Failed to get id: " + e);
+			this.props.navigation.navigate('Logout');
+		}
+	}
 }
 export default AccountPage;
 const styles = StyleSheet.create(
@@ -172,24 +265,48 @@ const styles = StyleSheet.create(
 		flex: 1,
 		marginHorizontal: 20,
 	},
-	buttonRender:
-	{
-		margin: 20,
-		justifyContent: 'center',
-		backgroundColor: 'rgb(33, 150, 243)',
-		textAlign: 'center',
-	},
-	buttonRenderText:
-	{
-		margin: 20,
-		justifyContent: 'center',
-		textAlign: 'center',
-		color: 'white'
-	},
 	title:
 	{
 		marginTop: 20,
 		marginBottom: 10,
 		fontSize: 30,
 	},
+	sectionListContainer:
+	{
+		height: '40%',
+		marginHorizontal: 40,
+		marginBottom: 10,
+		marginTop: 20,
+	},
+	profilePhoto:
+	{
+		marginLeft: 'auto',
+		marginRight: 'auto',
+		width: 100,
+		height: 100,
+		resizeMode: 'contain',
+		marginTop: 10,
+		marginBottom: 10,
+	},
+	detailsFlex:
+	{
+		display: 'flex',
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+	},
+	changePhotoButton:
+	{
+		marginTop: 10,
+		marginBottom: 10,
+		width: '60%',
+	},
+	updateButton:
+	{
+		marginLeft: 'auto',
+		marginRight: 'auto',
+		width: '40%',
+		marginTop: 10,
+		marginBottom: 10,
+		justifyContent: 'flex-end'
+	}
 });

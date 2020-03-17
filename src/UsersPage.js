@@ -8,7 +8,7 @@ class AccountPage extends Component
 	constructor(props)
 	{
 		super(props);
-		
+
 		this.state={
 			givenName: '',
 			familyName: '',
@@ -35,7 +35,7 @@ class AccountPage extends Component
 		});
 	}
 
-	componentWillUnmount() 
+	componentWillUnmount()
 	{
 		this.accountReload();
 	}
@@ -44,10 +44,12 @@ class AccountPage extends Component
 		return(
 			<View style={styles.container}>
 				<Text style={styles.title}>User Details</Text>
-				<Image
-					style={{width:100,height:100,resizeMode: 'contain'}}
-					source={{uri:this.state.photo}}
-				/>
+				<View style={styles.profilePhoto}>
+					<Image
+						style={{width:100,height:100,resizeMode: 'contain'}}
+						source={{uri:this.state.photo}}
+					/>
+				</View>
 				<Text>{this.state.errorPhoto}</Text>
 				<Text>Forename: {this.state.forename}</Text>
 				<Text>Surname: {this.state.surname}</Text>
@@ -60,12 +62,18 @@ class AccountPage extends Component
 						<Text style={styles.buttonRenderText}> {this.state.buttonRender} </Text>
 					</TouchableOpacity>
 				</View>
-				<SectionList
-					sections = {this.state.sections}
-					keyExtractor = {(item, index) => index}
-					renderItem = {({item}) => <Text>{item}</Text>}
-					renderSectionHeader = {() => <Text>Chit</Text>}
-				/>
+				<View style={styles.sectionListContainer}>
+					<SectionList
+						sections = {this.state.sections}
+						keyExtractor = {(item, index) => index}
+						renderItem = {({item}) => <Text>{item}</Text>}
+						renderSectionFooter={({section: {title}}) =>
+							<Image
+								style={{width: 60, height: 60, resizeMode: 'contain'}}
+								source={{uri: title}}
+							/>}
+					/>
+				</View>
 			</View>
 		);
 	}
@@ -180,13 +188,13 @@ class AccountPage extends Component
 		this.setState({userId: await this.getId()});
 		this.setState({searchId: await this.getSearchId()});
 		let id = this.state.searchId;
-		
+
 		if(this.state.searchId === this.state.userId)
 		{
 			this.props.navigation.navigate('AccountPage');
 		}
-		
-		
+
+
 		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + id;
 
 		console.log("DEBUG: Opening details for account user ID: " + id);
@@ -225,6 +233,7 @@ class AccountPage extends Component
 
 			console.log('DEBUG: userId: ' + userId + ' forename: ' + forename + ' surname: ' + surname + ' email: ' + email);
 			this.getPhoto(id);
+			this.getSections((responseJson)['recent_chits']);
 			this.getFollowing();
 		})
 		.catch((response) =>
@@ -234,11 +243,86 @@ class AccountPage extends Component
 		});
 	}
 
+	async getSections(chits)
+	{
+		console.log("DEBUG: Creating sections list");
+
+		let length =  Object.keys(chits).length;
+		let response = [];
+
+		console.log("DEBUG: Chits: " + JSON.stringify(chits));
+
+		//only show the top 10 newest
+		if(length > 10)
+		{
+			length = 10;
+		}
+
+		for(let i = 0; i < length; i++)
+		{
+			if(chits[i].hasOwnProperty('location'))
+			{
+				//chit itself
+				let timeStamp = await new Date(chits[i].timestamp);
+				timeStamp = timeStamp.toUTCString();
+				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+				console.log("DEBUG: Image: "+ image);
+				response.push(
+					{
+						title:image,
+						data:[chits[i].chit_content,
+							chits[i].location.longitude,
+							chits[i].location.latitude,
+							timeStamp,]
+					})
+			}
+			else
+			{
+
+				//chit itself without location data
+				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+
+				console.log("DEBUG: Image: "+ image);
+				response.push(
+					{
+						title:image,
+						data:[chits[i].chit_content,
+							chits[i].timestamp]
+					});
+			}
+		}
+		this.setState(
+			{
+				sections:response
+			});
+	}
+
+	async getPhoto(id)
+	{
+		console.log("DEBUG: Getting user photo");
+
+		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + id + "/photo";
+
+		console.log("DEBUG: opening photo for account user ID: " + id);
+
+		RNFetchBlob.fetch('GET',url)
+			.then((response) =>
+			{
+				let imageBase64 = response.base64();
+				this.setState({photo : "data:image/png;base64," + imageBase64});
+			})
+			.catch((message, statusCode) =>
+			{
+				this.state.errorPhoto = message;
+				console.log(message);
+			});
+	}
+
 	async getFollowing()
 	{
 		console.log("DEBUG: Getting following list");
 
-		var id = this.state.searchId;
+		let id = this.state.searchId;
 
 		if(id === -1)
 		{
@@ -306,27 +390,6 @@ class AccountPage extends Component
 		this.setState({buttonRender : "FOLLOW"});
 		return false;
 	}
-
-	async getPhoto(id)
-	{
-		console.log("DEBUG: Getting user photo");
-
-		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + id + "/photo";
-
-		console.log("DEBUG: opening photo for account user ID: " + id);
-
-		RNFetchBlob.fetch('GET',url)
-		.then((response) =>
-		{
-			let imageBase64 = response.base64();
-			this.setState({photo : "data:image/png;base64," + imageBase64});
-		})
-		.catch((message, statusCode) =>
-		{
-			this.state.errorPhoto = message;
-			console.log(message);
-		});
-	}
 }
 export default AccountPage;
 const styles = StyleSheet.create(
@@ -355,5 +418,18 @@ const styles = StyleSheet.create(
 		marginTop: 20,
 		marginBottom: 10,
 		fontSize: 30,
+	},
+	sectionListContainer:
+	{
+		height: '30%',
+		marginHorizontal: 40,
+		marginBottom: 20,
+		marginTop: 20,
+	},
+	profilePhoto:
+	{
+		marginLeft: 'auto',
+		marginRight: 'auto',
+		width: 100,
 	},
 });

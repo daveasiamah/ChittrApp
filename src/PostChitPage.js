@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, Button, StyleSheet, Alert, PermissionsAndroid} from 'react-native';
+import {View, TextInput, Button, StyleSheet, Alert, PermissionsAndroid, Image} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
 import Geolocation from 'react-native-geolocation-service';
 
@@ -14,18 +14,41 @@ class ChitsPage extends Component
 			chit: ' ',
 			locationPermission: false,
 			location: null,
+			imageExists: false,
 		};
 	}
 
 	componentDidMount()
 	{
-		this.findLocation().then();
+		this.postChitReload = this.props.navigation.addListener('focus', () =>
+		{
+			if(this.props.route.params?.photo)
+			{
+				const photo = this.props.route.params.photo;
+				console.log("DEBUG: Image exists is true");
+				this.setState({photo: photo.uri});
+				this.setState({imageExists: true});
+			}
+			this.findLocation().then();
+		});
+
+	}
+
+	componentWillUnmount()
+	{
+		//Resets the image for the chit
+		this.postChitReload();
+		this.setState({imageExists: false});
 	}
 
 	render(){
 		return(
 		<View>
-			<Text>Post New Chit</Text>
+				{this.state.imageExists &&
+					<Image
+						style={{width:100,height:100,resizeMode: 'contain'}}
+						source={{uri:this.state.photo}}
+					/>}
 			<TextInput
 				style={styles.Input}
 				onChangeText={chitContent => this.setState({chit:chitContent})}
@@ -54,13 +77,22 @@ class ChitsPage extends Component
 
 	async postChit()
 	{
-		console.log("DEBUG: Getting chits");
+		console.log("DEBUG: Posting chit");
 		const token = await this.getToken();
 		const location = this.state.location;
 		const chitContent = this.state.chit;
 		let longitude;
 		let latitude;
 		const timeStamp = Date.now();
+
+		//checks if the chit has anything in it
+		if(!chitContent.length)
+		{
+			//prevents user from posting an empty chit
+			Alert.alert("Chit cannot be empty!");
+			this.setState({imageExists: false});
+			return;
+		}
 
 		if(this.state.locationPermission === true)
 		{
@@ -91,7 +123,7 @@ class ChitsPage extends Component
 
 		console.log("DEBUG: " + chitData);
 		console.log("DEBUG: " + JSON.stringify(chitData));
-		//needs one extra chit to see if there is another page
+
 		return fetch("http://10.0.2.2:3333/api/v0.0.5/chits",
 		{
 			method:'POST',
@@ -110,24 +142,71 @@ class ChitsPage extends Component
 			{
 				throw "Response was: " + response.status;
 			}
-
 			return response.json();
 		})
-		.then(() =>
+		.then((response) =>
 		{
 			Alert.alert("Chit posted");
-			this.props.navigation.navigate('ChitsPage');
+
+			if(this.state.imageExists !== true)
+			{
+				console.log("DEBUG: No image included, navigating to ChitsPage");
+				this.props.navigation.navigate('ChitsPage');
+			}
+			else
+			{
+				console.log("DEBUG: Response postId: " + JSON.stringify(response));
+				this.setState({chitId : response.chit_id});
+				this.postPhoto().then();
+			}
+
 		})
-		 .catch((error) =>
-		 {
+		.catch((error) =>
+		{
 			this.state.error = error;
 			console.log("DEBUG: " + error);
-		 });
+		});
 	}
 
-	async takePhoto()
+	async postPhoto()
 	{
+		console.log("DEBUG: Posting Photo");
 
+		const token = await this.getToken();
+		const id = this.state.chitId;
+		const url = "http://10.0.2.2:3333/api/v0.0.5/chits/" + id + "/photo";
+		let photo = this.props.route.params.photo;
+		console.log("DEBUG: Chit ID:" + id);
+		console.log("DEBUG: Photo:" + photo);
+
+		return fetch(url,
+		{
+				method:'POST',
+				headers:
+					{
+						Accept: "application/json",
+						'X-Authorization': token,
+						'Content-Type': 'application/octet-stream'
+					},
+				body:photo
+			})
+			.then((response) =>
+			{
+				//show the chits
+				if(response.status !== 201)
+				{
+					throw "Response was: " + response.status;
+				}
+			})
+			.then(() =>
+			{
+				this.props.navigation.navigate('ChitsPage');
+			})
+			.catch((error) =>
+			{
+				this.state.error = error;
+				console.log("DEBUG: " + error);
+			});
 	}
 
 	async getToken()

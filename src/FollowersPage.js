@@ -43,7 +43,7 @@ class FollowersPage extends Component
 								style={styles.followContainer}
 								onPress={() =>
 								{
-									this.openProfile("" + index);
+									this.openProfile("" + index).then();
 								}}
  							>
 								<Text style={styles.user}>{item}</Text>

@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity} from 'react-native';
-import AsyncStorage from '@react-native-community/async-storage';
 import { RNCamera } from 'react-native-camera';
 
 class ChitsPage extends Component
@@ -13,31 +12,30 @@ class ChitsPage extends Component
 		{
 			photo: null,
 		};
-
 	}
 
 	render(){
 		return(
-		<View>
+		<View style={styles.container}>
 			<RNCamera
 				ref={ref =>
 					{
 						this.camera = ref;
 					}
 				}
-				style={{flex:1,
-					width: '100%'}}
-				>
+				style={styles.preview}
+				captureAudio = {false}
+			>
 			</RNCamera>
 			<View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center' }}>
-			<TouchableOpacity
-				onPress={this.takePicture.bind(this)}
-				style={styles.capture}
-					>
-					<Text style={{ fontSize: 16 }}>
-				Capture
-				</Text>
-			</TouchableOpacity>
+				<TouchableOpacity
+					onPress={this.takePicture.bind(this)}
+					style={styles.capture}
+				>
+					<Text style={styles.capture}>
+						CAPTURE
+					</Text>
+				</TouchableOpacity>
 			</View>
 		</View>
 
@@ -49,40 +47,42 @@ class ChitsPage extends Component
 		{
 			const options = { quality: 0.5, base64: true };
 			const data = await this.camera.takePictureAsync(options);
-			console.log('DEBUG: Image data' + data.uri);
 			this.setState({photo: data});
+
+			if(this.props.route.params?.profile)
+			{
+				//the photo is meant for the profile page
+				this.props.navigation.navigate('AccountPage', {photo: data});
+			}
+			else
+			{
+				this.props.navigation.navigate('PostChitPage', {photo: data});
+			}
 		}
 	};
-
-	async storePhoto()
-	{
-		try
-		{
-			let photo = "" + this.state.photo;
-
-			console.log("DEBUG: Storing Photo");
-			await AsyncStorage.setItem('photo', photo);
-
-			console.log("DEBUG: Success, navigating to PostChitPage");
-			this.props.navigation.navigate('PostChitPage');
-		}
-		catch (e)
-		{
-			console.log("DEBUG: Failed to store id and token: " + e);
-		}
-	}
 }
 export default ChitsPage;
 
 const styles = StyleSheet.create(
 	{
-		error:
+		container:
 		{
-			color: "red"
+			flex: 1,
+			flexDirection: 'column',
 		},
-		Input:
+		preview:
 		{
-			borderWidth: 1,
-			borderColor: '#777',
+			flex: 1,
+			justifyContent: 'flex-end',
+			alignItems: 'center',
+		},
+		capture:
+		{
+			flex: 0,
+			borderRadius: 5,
+			padding: 15,
+			paddingHorizontal: 20,
+			alignSelf: 'center',
+			margin: 20,
 		},
 	});

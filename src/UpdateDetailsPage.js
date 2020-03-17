@@ -18,7 +18,6 @@ class UpdateDetailsPage extends Component
 	render(){
 		return(
 			<View style={styles.container}>
-			<Text>Update your details</Text>
 			<Text style={styles.error} >{this.state.registration}</Text>
 			<TextInput
 				style={styles.Input}
@@ -81,9 +80,9 @@ class UpdateDetailsPage extends Component
 		{
 			if(response.status === 201)
 			{
-				Alert.alert("Account created!");
+				Alert.alert("Account Updated!");
 				console.log("DEBUG: Account created, navigating to LoginPage");
-				this.props.navigation.navigate('LoginPage');
+				this.props.navigation.navigate('AccountPage');
 			}
 			else
 			{

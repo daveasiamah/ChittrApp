@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Text, View, TextInput, Button, StyleSheet, SectionList, SafeAreaView} from 'react-native';
+import {Text, View, Button, StyleSheet, SectionList, SafeAreaView, Image} from 'react-native';
 
 class ChitsPage extends Component
 {
@@ -7,9 +7,10 @@ class ChitsPage extends Component
 	{
 		super(props);
 
-		this.state={
+		this.state=
+		{
 			chitsStart: 0,
-			chitsCount: 4,
+			chitsCount: 6,
 			chits: '',
 			chitNext: false
 		};
@@ -48,7 +49,7 @@ class ChitsPage extends Component
 								this.state.chitsStart = 0;
 							}
 						}
-						this.getChits();
+						this.getChits().then();
 					}}
 				/>
 				<Button
@@ -56,15 +57,13 @@ class ChitsPage extends Component
 					onPress={() =>
 					{
 						console.log("DEBUG: Button next pressed");
-						//needs to check how many chits are displayed
-						let length =  Object.keys(this.state.chits).length;
 
 						if(this.state.chitNext === true)
 						{
 							this.state.chitsStart += this.state.chitsCount;
-							this.getChits();
+							this.getChits().then();
 						}
-						//else theres no more pages so do nothing
+						//else there's no more pages so do nothing
 					}}
 				/>
 			</View>
@@ -72,7 +71,15 @@ class ChitsPage extends Component
 					<SectionList
 						sections = {this.state.sections}
 						keyExtractor = {(item, index) => index}
-						renderItem = {({item}) => <Text>{item}</Text>}
+						renderItem = {({item}) =>
+							<Text>{item}</Text>
+						}
+						renderSectionFooter={({section: {title}}) =>
+								<Image
+								style={{width: 60, height: 60, resizeMode: 'contain', marginBottom: 10}}
+								source={{uri: title}}
+								/>
+						}
 					/>
 				</SafeAreaView>
 			<Button
@@ -118,6 +125,7 @@ class ChitsPage extends Component
 			this.state.error = error;
 		 });
 	}
+
 	async getSections()
 	{
 		console.log("DEBUG: Creating sections list");
@@ -139,41 +147,38 @@ class ChitsPage extends Component
 			{
 				if(chits[i].hasOwnProperty('location'))
 				{
-					//user who posted chit
-					response.push(
-					{
-						data:[chits[i].user.chit_content,
-						chits[i].user.given_name,
-						chits[i].user.family_name,
-						chits[i].user.email]
-					});
 
 					//chit itself
-					let timeStamp = new Date(chits[i].timestamp);
+					let timeStamp = await new Date(chits[i].timestamp);
 					timeStamp = timeStamp.toUTCString();
+					let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+
 					response.push(
 					{
-						data:[chits[i].chit_content,
-						chits[i].location.longitude,
-						chits[i].location.latitude,
-						timeStamp]
-					});
+						title:image,
+						data:[chits[i].user.given_name,
+							chits[i].chit_content,
+							chits[i].location.longitude,
+							chits[i].location.latitude,
+							timeStamp,]
+					})
 				}
 				else
 				{
-					//user who posted chit
+					//chit itself without location data
+					let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+
+					console.log("DEBUG: Image: "+ image);
 					response.push(
 					{
+						title:image,
 						data:[chits[i].user.chit_content,
 						chits[i].user.given_name,
 						chits[i].user.family_name,
-						chits[i].user.email]
+						chits[i].user.email,
+						chits[i].chit_content,
+						chits[i].timestamp]
 					});
-
-					//chit itself without location data
-					response.push(
-						{data:[chits[i].chit_content,
-						chits[i].timestamp]});
 				}
 			}
 			else
