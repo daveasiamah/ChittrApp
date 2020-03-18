@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import {Text, View, TextInput, Button, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -10,14 +17,25 @@ class LoginPage extends Component
 
 		this.state={
 			email: '',
-			password: ''
+			password: '',
 		}
+	}
+
+	componentDidMount()
+	{
+		//if they are already logged in go to the home page
+		this.getId().then((response) =>
+		{
+			if(response !== 'null')
+			{
+				this.props.navigation.navigate('Home');
+			}
+		})
 	}
 
 	render(){
 		return(
 			<View>
-			<Text>Login</Text>
 			<Text style={styles.error} >{this.state.error}</Text>
 			<TextInput
 				style={styles.Input}
@@ -106,14 +124,29 @@ class LoginPage extends Component
 
 			this.storeLogin().then();
 		})
-		 .catch((error) =>
-		 {
+		.catch((error) =>
+		{
 			this.setState
-			({
-				loginData: "Failed to log in: " + error
-			});
+		({
+			loginData: "Failed to log in: " + error
+		});
 			console.log("DEBUG: " + error);
-		 });
+		});
+	}
+
+	async getId()
+	{
+		try
+		{
+			const id = await AsyncStorage.getItem('id');
+			console.log("DEBUG: userId found: " + id);
+			return id + "" ;
+		}
+		catch (e)
+		{
+			console.log("DEBUG: Failed to get userId: " + e);
+			this.props.navigation.navigate('Logout');
+		}
 	}
 }
 export default LoginPage;

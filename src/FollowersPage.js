@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, TouchableOpacity, StyleSheet, Alert, SectionList, SafeAreaView} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -59,19 +66,29 @@ class FollowersPage extends Component
 	{
 		let users =  this.state.users;
 		let searchId = users[index].user_id;
+		let userId = "" + await this.getId();
 
-		try
+		console.log("DEBUG: SearchId:" + searchId + " UserId: " + userId);
+		if((""+ searchId) === userId)
 		{
-			console.log("DEBUG: Storing searchId: " + searchId);
-
-			await AsyncStorage.setItem('searchId', "" + searchId);
-
-			console.log("DEBUG: Success, navigating to AccountPage");
-			this.props.navigation.navigate('UsersPage');
+			console.log("DEBUG: User has clicked on their own account");
+			this.props.navigation.navigate('Account');
 		}
-		catch (e)
+		else
 		{
-			console.log("DEBUG: Failed to store searchId: " + e);
+			try
+			{
+				console.log("DEBUG: Storing searchId: " + searchId);
+
+				await AsyncStorage.setItem('searchId', "" + searchId);
+
+				console.log("DEBUG: Success, navigating to users page");
+				this.props.navigation.navigate('UsersPage');
+			}
+			catch (e)
+			{
+				console.log("DEBUG: Failed to store searchId: " + e);
+			}
 		}
 	}
 
@@ -79,12 +96,21 @@ class FollowersPage extends Component
 	{
 		console.log("DEBUG: finding followers");
 
-		let userId = await this.getId();
+		if(this.props.route.params?.searchId)
+		{
+			const id = this.props.route.params.searchId;
+			console.log("DEBUG: Was redirected from search page: " + id);
+			await this.setState({userId: id});
+		}
+
+		let userId = this.state.userId;
+		console.log("DEBUG UserId: " + userId);
 
 		if(userId === -1)
 		{
 			console.log("UserID was -1, it hasn't been set yet");
 			userId = await this.getId();
+			await this.setState({userId: userId});
 		}
 
 		console.log("UserID:" + userId);
@@ -140,8 +166,6 @@ class FollowersPage extends Component
 
 		for(let i = 0; i < length; i++)
 		{
-			this.setState({noResult: ""});
-
 			item = users[i].given_name + " " + users[i].family_name + "\n" + users[i].email;
 
 			items.push(item);
@@ -149,7 +173,11 @@ class FollowersPage extends Component
 
 		if(length === 0)
 		{
-			this.state.noResult = "No followers yet";
+			await this.setState({noResult:"No followers yet"});
+		}
+		else
+		{
+			await this.setState({noResult: ""});
 		}
 
 		response = [{data: items}];

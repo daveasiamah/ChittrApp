@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, StyleSheet, TouchableOpacity} from 'react-native';
 import { RNCamera } from 'react-native-camera';

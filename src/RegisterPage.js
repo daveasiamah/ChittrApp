@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, TextInput, Button, StyleSheet, Alert} from 'react-native';
 
@@ -57,7 +64,8 @@ class RegisterPage extends Component
 	submitLogin()
 	{
 		console.log("Submit login button pressed");
-
+		//gets login from server
+		//turns jsondata into a string
 		let jsonData = JSON.stringify({
 				given_name:this.state.given_name,
 				family_name:this.state.family_name,

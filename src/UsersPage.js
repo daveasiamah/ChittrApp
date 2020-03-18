@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, StyleSheet, SectionList, Image, TouchableOpacity} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -62,6 +69,22 @@ class AccountPage extends Component
 						<Text style={styles.buttonRenderText}> {this.state.buttonRender} </Text>
 					</TouchableOpacity>
 				</View>
+				<View>
+					<TouchableOpacity
+						style={styles.buttonRender}
+						onPress={() => this.props.navigation.navigate('Followers', {searchId:this.state.searchId})}
+					>
+						<Text style={styles.buttonRenderText}> FOLLOWERS </Text>
+					</TouchableOpacity>
+				</View>
+				<View>
+					<TouchableOpacity
+						style={styles.buttonRender}
+						onPress={() => this.props.navigation.navigate('Following', {searchId:this.state.searchId})}
+					>
+						<Text style={styles.buttonRenderText}> FOLLOWING </Text>
+					</TouchableOpacity>
+				</View>
 				<View style={styles.sectionListContainer}>
 					<SectionList
 						sections = {this.state.sections}
@@ -93,6 +116,7 @@ class AccountPage extends Component
 		}
 	}
 
+	//gets token from storage
 	async getToken()
 	{
 		try
@@ -108,6 +132,8 @@ class AccountPage extends Component
 		}
 	}
 
+
+	//get search id (user who was clicked on) from storage
 	async getSearchId()
 	{
 		try
@@ -185,16 +211,8 @@ class AccountPage extends Component
 	async getDetails()
 	{
 		console.log("DEBUG: UsersPage Getting user details");
-		this.setState({userId: await this.getId()});
-		this.setState({searchId: await this.getSearchId()});
+		await this.setState({searchId: await this.getSearchId()});
 		let id = this.state.searchId;
-
-		if(this.state.searchId === this.state.userId)
-		{
-			this.props.navigation.navigate('AccountPage');
-		}
-
-
 		let url = "http://10.0.2.2:3333/api/v0.0.5/user/" + id;
 
 		console.log("DEBUG: Opening details for account user ID: " + id);
@@ -216,7 +234,6 @@ class AccountPage extends Component
 			let forename = (responseJson)['given_name'];
 			let surname = (responseJson)['family_name'];
 			let email = (responseJson)['email'];
-			let recentChits = (responseJson)['recent_chits'];
 
 			if(this.state.searchId !== -1)
 			{
@@ -266,6 +283,7 @@ class AccountPage extends Component
 				let timeStamp = await new Date(chits[i].timestamp);
 				timeStamp = timeStamp.toUTCString();
 				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
+
 				console.log("DEBUG: Image: "+ image);
 				response.push(
 					{
@@ -282,12 +300,14 @@ class AccountPage extends Component
 				//chit itself without location data
 				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
 
+				let timeStamp = await new Date(chits[i].timestamp);
+				timeStamp = timeStamp.toUTCString();
 				console.log("DEBUG: Image: "+ image);
 				response.push(
 					{
 						title:image,
 						data:[chits[i].chit_content,
-							chits[i].timestamp]
+							timeStamp]
 					});
 			}
 		}
@@ -311,7 +331,7 @@ class AccountPage extends Component
 				let imageBase64 = response.base64();
 				this.setState({photo : "data:image/png;base64," + imageBase64});
 			})
-			.catch((message, statusCode) =>
+			.catch((message) =>
 			{
 				this.state.errorPhoto = message;
 				console.log(message);
@@ -401,14 +421,14 @@ const styles = StyleSheet.create(
 	},
 	buttonRender:
 	{
-		margin: 20,
+		margin: 5,
 		justifyContent: 'center',
 		backgroundColor: 'rgb(33, 150, 243)',
 		textAlign: 'center',
 	},
 	buttonRenderText:
 	{
-		margin: 20,
+		margin: 10,
 		justifyContent: 'center',
 		textAlign: 'center',
 		color: 'white'

@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SectionList, SafeAreaView, Button} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -71,19 +78,29 @@ class UserSearchPage extends Component
 	{
 		let users =  this.state.users;
 		let searchId = users[index].user_id;
+		let userId = "" + await this.getId();
 
-		try
+		console.log("DEBUG SearchId:" + searchId + " UserId: " + userId);
+		if((""+ searchId) === userId)
 		{
-			console.log("DEBUG: Storing searchId: " + searchId);
-
-			await AsyncStorage.setItem('searchId', "" + searchId);
-
-			console.log("DEBUG: Success, navigating to AccountPage");
-			this.props.navigation.navigate('UsersPage');
+			console.log("DEBUG: User has clicked on their own account");
+			this.props.navigation.navigate('Account').then();
 		}
-		catch (e)
+		else
 		{
-			console.log("DEBUG: Failed to store searchId: " + e);
+			try
+			{
+				console.log("DEBUG: Storing searchId: " + searchId);
+
+				await AsyncStorage.setItem('searchId', "" + searchId);
+
+				console.log("DEBUG: Success, navigating to users page");
+				this.props.navigation.navigate('UsersPage');
+			}
+			catch (e)
+			{
+				console.log("DEBUG: Failed to store searchId: " + e);
+			}
 		}
 	}
 
@@ -154,6 +171,21 @@ class UserSearchPage extends Component
 
 		//update the page with the users once done
 		this.setState({sections: response});
+	}
+
+	async getId()
+	{
+		try
+		{
+			const id = await AsyncStorage.getItem('id');
+			console.log("DEBUG: id found: " + id);
+			return "" + id;
+		}
+		catch (e)
+		{
+			console.log("DEBUG: Failed to get id: " + e);
+			this.props.navigation.navigate('LoginPage');
+		}
 	}
 }
 

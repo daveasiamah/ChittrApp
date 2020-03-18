@@ -1,5 +1,13 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import {Text, View, Button, StyleSheet, SectionList, SafeAreaView, Image} from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 
 class ChitsPage extends Component
 {
@@ -20,7 +28,7 @@ class ChitsPage extends Component
 	{
 		this.followersReload = this.props.navigation.addListener('focus', () =>
 		{
-			this.getChits().then(null);
+			this.getChits().then();
 		});
 	}
 
@@ -98,6 +106,9 @@ class ChitsPage extends Component
 	{
 		console.log("DEBUG: Getting chits");
 
+		//will redirect if not logged in
+		this.getId();
+
 		//needs one extra chit to see if there is another page
 		return fetch("http://10.0.2.2:3333/api/v0.0.5/chits?start=" +
 			this.state.chitsStart + "&count=" + this.state.chitsCount +1)
@@ -150,7 +161,7 @@ class ChitsPage extends Component
 
 					//chit itself
 					let timeStamp = await new Date(chits[i].timestamp);
-					timeStamp = timeStamp.toUTCString();
+					timeStamp = await timeStamp.toUTCString();
 					let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
 
 					response.push(
@@ -169,6 +180,10 @@ class ChitsPage extends Component
 					let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
 
 					console.log("DEBUG: Image: "+ image);
+
+					let timeStamp = await new Date(chits[i].timestamp);
+					timeStamp = await timeStamp.toUTCString();
+
 					response.push(
 					{
 						title:image,
@@ -177,7 +192,7 @@ class ChitsPage extends Component
 						chits[i].user.family_name,
 						chits[i].user.email,
 						chits[i].chit_content,
-						chits[i].timestamp]
+						timeStamp]
 					});
 				}
 			}
@@ -190,6 +205,21 @@ class ChitsPage extends Component
 		{
 			sections:response
 		});
+	}
+
+	async getId()
+	{
+		try
+		{
+			const id = await AsyncStorage.getItem('id');
+			console.log("DEBUG: id found: " + id);
+			return "" + id;
+		}
+		catch (e)
+		{
+			console.log("DEBUG: Failed to get id: " + e);
+			this.props.navigation.navigate('LoginPage');
+		}
 	}
 }
 export default ChitsPage;

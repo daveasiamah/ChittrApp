@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, TextInput, Button, StyleSheet, Alert} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';

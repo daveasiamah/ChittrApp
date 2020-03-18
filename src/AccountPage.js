@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import React, { Component } from 'react';
 import { Text, View, StyleSheet, SectionList, Image, Button} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
@@ -86,6 +93,7 @@ class AccountPage extends Component
 
 	async getId()
 	{
+		//gets id from storage
 		try
 		{
 			const id = await AsyncStorage.getItem('id');
@@ -101,6 +109,7 @@ class AccountPage extends Component
 
 	async getDetails()
 	{
+		//gets the users details and then photo
 		console.log("DEBUG: Getting user details");
 		this.setState({userId: await this.getId()});
 		let userId = this.state.userId;
@@ -183,11 +192,15 @@ class AccountPage extends Component
 				let image = "http://10.0.2.2:3333/api/v0.0.5/chits/" + chits[i].chit_id + "/photo";
 
 				console.log("DEBUG: Image: "+ image);
+
+				let timeStamp = await new Date(chits[i].timestamp);
+				timeStamp = timeStamp.toUTCString();
+
 				response.push(
 					{
 						title:image,
 						data:[chits[i].chit_content,
-							chits[i].timestamp]
+							timeStamp]
 					});
 			}
 		}
@@ -242,6 +255,7 @@ class AccountPage extends Component
 		});
 	}
 
+	//gets token from storage
 	async getToken()
 	{
 		try

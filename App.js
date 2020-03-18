@@ -1,3 +1,10 @@
+/*
+	Author: Thomas Kavanagh
+	version: 1.0
+	Last updated: 18/03/2020
+
+*/
+
 import 'react-native-gesture-handler';
 import React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
@@ -31,7 +38,7 @@ export default function Root()
 				<Drawer.Screen name="Followers" component={FollowersStack}/>
 				<Drawer.Screen name="Following" component={FollowingStack}/>
 				<Drawer.Screen name="Account" component={AccountStack}/>
-				<Drawer.Screen name="Logout" component={LogStack}/>
+				<Drawer.Screen name="Logout" component={LogStack} options={{gestureEnabled: false}}/>
 			</Drawer.Navigator>
 		</NavigationContainer>
 	);
@@ -49,6 +56,14 @@ function SearchUserStack()
 				name = "UsersPage"
 				options={{title: "UsersPage"}}
 				component={UsersPage}/>
+			<Stack.Screen
+				name = "Followers"
+				options={{title: "FollowersPage"}}
+				component={FollowersPage}/>
+			<Stack.Screen
+				name = "Following"
+				options={{title: "Following Page"}}
+				component={FollowingPage}/>
 		</Stack.Navigator>
 	);
 }
