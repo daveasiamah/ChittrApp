@@ -1,9 +1,3 @@
-/*
-	Author: Thomas Kavanagh
-	version: 1.0
-	Last updated: 18/03/2020
-
-*/
 
 import React, { Component } from 'react';
 import {Text, View, TextInput, Button, StyleSheet} from 'react-native';
@@ -18,15 +12,16 @@ class LoginPage extends Component
 		this.state={
 			email: '',
 			password: '',
+			error: '',
 		}
 	}
 
 	componentDidMount()
 	{
 		//if they are already logged in go to the home page
-		this.getId().then((response) =>
+		this.getId().then((id) =>
 		{
-			if(response !== 'null')
+			if(id !== 'null')
 			{
 				this.props.navigation.navigate('Home');
 			}
@@ -43,20 +38,23 @@ class LoginPage extends Component
 				placeholder={"email@email.com"}
 			/>
 			<TextInput
+				secureTextEntry={true}
 				style={styles.Input}
 				onChangeText={password_data => this.setState({password:password_data})}
 				placeholder={"password"}
 			/>
-			<Button
-				style={styles.loginButton}
-				title='Login'
-				onPress={() => this.submitLogin()}
-			/>
-			<Button
-				style={styles.loginButton}
-				title='Sign up'
-				onPress={() => this.props.navigation.navigate('RegisterPage')}
-			/>
+				<View style={styles.buttonContainer}>
+					<Button
+						style={styles.button}
+						title='Login'
+						onPress={() => this.submitLogin()}
+					/>
+					<Button
+						style={styles.button}
+						title="Don't have an account?"
+						onPress={() => this.props.navigation.navigate('RegisterPage')}
+					/>
+				</View>
 			</View>
 		);
 	}
@@ -128,7 +126,7 @@ class LoginPage extends Component
 		{
 			this.setState
 		({
-			loginData: "Failed to log in: " + error
+			error: "Wrong email or password"
 		});
 			console.log("DEBUG: " + error);
 		});
@@ -152,15 +150,22 @@ class LoginPage extends Component
 export default LoginPage;
 const styles = StyleSheet.create(
 	{
-		loginButton:
+		buttonContainer:
 		{
-			margin: 20,
-			justifyContent: 'center'
+			marginLeft: 'auto',
+			marginRight: 'auto',
+			width: '80%',
+			marginBottom: 10,
+			marginTop: 20,
 		},
 		Input:
 		{
+			marginLeft: 'auto',
+			marginRight: 'auto',
+			width: '80%',
 			borderWidth: 1,
-			borderColor: '#777'
+			borderColor: '#777',
+			marginBottom: 10,
 		},
 		error:
 		{

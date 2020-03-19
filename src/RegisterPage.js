@@ -1,9 +1,3 @@
-/*
-	Author: Thomas Kavanagh
-	version: 1.0
-	Last updated: 18/03/2020
-
-*/
 
 import React, { Component } from 'react';
 import { Text, View, TextInput, Button, StyleSheet, Alert} from 'react-native';
@@ -26,38 +20,40 @@ class RegisterPage extends Component
 	render(){
 		return(
 			<View style={styles.container}>
-			<Text>Register</Text>
-			<Text style={styles.error} >{this.state.error}</Text>
-			<TextInput
-				style={styles.Input}
-				onChangeText={forename => this.setState({given_name:forename})}
-				placeholder={"forename"}
-			/>
-			<TextInput
-				style={styles.Input}
-				onChangeText={surname => this.setState({family_name:surname})}
-				placeholder={"surname"}
-			/>
-			<TextInput
-				style={styles.Input}
-				onChangeText={email_data => this.setState({email:email_data})}
-				placeholder={"email@email.com"}
-			/>
-			<TextInput
-				style={styles.Input}
-				onChangeText={password_data => this.setState({password:password_data})}
-				placeholder={"password"}
-			/>
-			<Button
-				style={styles.loginButton}
-				title='Login'
-				onPress={() => this.submitLogin()}
-			/>
-			<Button
-				style={styles.loginButton}
-				title='Already have an account?'
-				onPress={() => this.props.navigation.navigate('LoginPage')}
-			/>
+				<Text style={styles.error} >{this.state.error}</Text>
+				<TextInput
+					style={styles.Input}
+					onChangeText={forename => this.setState({given_name:forename})}
+					placeholder={"forename"}
+				/>
+				<TextInput
+					style={styles.Input}
+					onChangeText={surname => this.setState({family_name:surname})}
+					placeholder={"surname"}
+				/>
+				<TextInput
+					style={styles.Input}
+					onChangeText={email_data => this.setState({email:email_data})}
+					placeholder={"email@email.com"}
+				/>
+				<TextInput
+					secureTextEntry={true}
+					style={styles.Input}
+					onChangeText={password_data => this.setState({password:password_data})}
+					placeholder={"password"}
+				/>
+				<View style={styles.buttonContainer}>
+					<Button
+						style={styles.loginButton}
+						title='Sign Up'
+						onPress={() => this.submitLogin()}
+					/>
+					<Button
+						style={styles.loginButton}
+						title='Already have an account?'
+						onPress={() => this.props.navigation.navigate('LoginPage')}
+					/>
+				</View>
 			</View>
 		);
 	}
@@ -112,16 +108,23 @@ const styles = StyleSheet.create(
 		{
 			flex: 1,
 		},
-		loginButton:
-		{
-			margin: 20,
-			justifyContent: 'center'
-		},
+		buttonContainer:
+			{
+				marginLeft: 'auto',
+				marginRight: 'auto',
+				width: '80%',
+				marginBottom: 10,
+				marginTop: 20,
+			},
 		Input:
-		{
-			borderWidth: 1,
-			borderColor: '#777'
-		},
+			{
+				marginLeft: 'auto',
+				marginRight: 'auto',
+				width: '80%',
+				borderWidth: 1,
+				borderColor: '#777',
+				marginBottom: 10,
+			},
 		error:
 		{
 			color: "red"

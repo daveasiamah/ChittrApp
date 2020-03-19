@@ -1,8 +1,7 @@
 /*
 	Author: Thomas Kavanagh
-	version: 1.0
-	Last updated: 18/03/2020
-
+	version: 1.2 - Release
+	Last updated: 19/03/2020
 */
 
 import 'react-native-gesture-handler';
@@ -30,7 +29,7 @@ const Drawer = createDrawerNavigator();
 
 export default function Root()
 {
-	return(
+		return(
 		<NavigationContainer>
 			<Drawer.Navigator initialRouteName="Home">
 				<Drawer.Screen name="Home" component={ChitStack}/>

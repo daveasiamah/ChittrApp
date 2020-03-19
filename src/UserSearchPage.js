@@ -1,9 +1,3 @@
-/*
-	Author: Thomas Kavanagh
-	version: 1.0
-	Last updated: 18/03/2020
-
-*/
 
 import React, { Component } from 'react';
 import { Text, View, TextInput, TouchableOpacity, StyleSheet, SectionList, SafeAreaView, Button} from 'react-native';
@@ -162,7 +156,8 @@ class UserSearchPage extends Component
 		{
 			this.state.noResult = "";
 
-			item = users[i].given_name + " " + users[i].family_name;
+			item = users[i].given_name + " " + users[i].family_name
+			+ "\n" + users[i].email;
 
 			items.push(item);
 		}

@@ -1,9 +1,3 @@
-/*
-	Author: Thomas Kavanagh
-	version: 1.0
-	Last updated: 18/03/2020
-
-*/
 
 import React, { Component } from 'react';
 import {Text, View, Button, StyleSheet, SectionList, SafeAreaView, Image} from 'react-native';
@@ -28,6 +22,13 @@ class ChitsPage extends Component
 	{
 		this.followersReload = this.props.navigation.addListener('focus', () =>
 		{
+			this.getId().then((id) =>
+			{
+				if(id === 'null' || id === null)
+				{
+					this.props.navigation.navigate('Logout');
+				}
+			});
 			this.getChits().then();
 		});
 	}
@@ -219,6 +220,7 @@ class ChitsPage extends Component
 		{
 			console.log("DEBUG: Failed to get id: " + e);
 			this.props.navigation.navigate('LoginPage');
+			return false;
 		}
 	}
 }
