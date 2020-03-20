@@ -2,6 +2,7 @@
 import React, { Component } from 'react';
 import {Text, View, TextInput, Button, StyleSheet} from 'react-native';
 import AsyncStorage from '@react-native-community/async-storage';
+import { BackHandler } from 'react-native';
 
 class LoginPage extends Component
 {
@@ -18,7 +19,9 @@ class LoginPage extends Component
 
 	componentDidMount()
 	{
+		this.setState({error:''});
 		//if they are already logged in go to the home page
+		BackHandler.addEventListener('backPress', () => true);
 		this.getId().then((id) =>
 		{
 			if(id !== 'null')
@@ -26,6 +29,11 @@ class LoginPage extends Component
 				this.props.navigation.navigate('Home');
 			}
 		})
+	}
+
+	componentWillUnmount()
+	{
+		BackHandler.removeEventListener('backPress', () => true);
 	}
 
 	render(){
@@ -169,6 +177,8 @@ const styles = StyleSheet.create(
 		},
 		error:
 		{
+			marginLeft: 'auto',
+			marginRight: 'auto',
 			color: "red"
 		}
 	});

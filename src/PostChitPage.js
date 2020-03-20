@@ -245,7 +245,7 @@ class PostChitPage extends Component
 			if(this.state.imageExists !== true)
 			{
 				console.log("DEBUG: No image included, navigating to ChitsPage");
-				this.props.navigation.navigate('ChitsPage');
+				this.props.navigation.navigate('ChitsPage', {posted:'posted'});
 			}
 			else
 			{
@@ -294,7 +294,7 @@ class PostChitPage extends Component
 			})
 			.then(() =>
 			{
-				this.props.navigation.navigate('ChitsPage');
+				this.props.navigation.navigate('ChitsPage', {posted:'posted'});
 			})
 			.catch((error) =>
 			{
@@ -497,8 +497,18 @@ class PostChitPage extends Component
 			{
 				chitIndexStr = await AsyncStorage.getItem('chitIndex' + userId);
 				chitIndexJson = JSON.parse(chitIndexStr);
-				console.log("DEBUG: Index was found");
-				return chitIndexJson;
+
+				if(chitIndexStr !== null && chitIndexStr !== 'null')
+				{
+					console.log("DEBUG: Index was found");
+					return chitIndexJson;
+				}
+				else
+				{
+					console.log("DEBUG: Index was not found");
+					notSet = true;
+				}
+
 			}
 			catch(error)
 			{

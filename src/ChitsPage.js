@@ -20,21 +20,31 @@ class ChitsPage extends Component
 
 	componentDidMount()
 	{
-		this.followersReload = this.props.navigation.addListener('focus', () =>
+		this.chitsReload = this.props.navigation.addListener('focus', () =>
 		{
-			this.getId().then((id) =>
+			if(this.props.route.params?.posted)
 			{
-				if(id === 'null' || id === null)
-				{
-					this.props.navigation.navigate('Logout');
-				}
-			});
-			this.getChits().then();
+				this.props.route.params.posted = null;
+				console.log("DEBUG: chit was posted, refreshing");
+				this.getChits(0).then();
+			}
+			else if(this.state.chitsStart === 0)
+			{
+				this.getChits(0).then();
+			}
+		});
+		this.getId().then((id) =>
+		{
+			if(id === 'null' || id === null)
+			{
+				this.props.navigation.navigate('Logout', {screen: 'LoginPage'});
+			}
 		});
 	}
 
-	componentWillUnmount() {
-		this.followersReload();
+	componentWillUnmount()
+	{
+		this.chitsReload();
 	}
 
 	render(){
@@ -46,19 +56,25 @@ class ChitsPage extends Component
 					onPress={() =>
 					{
 						console.log("DEBUG: Button prev pressed");
-
+						//prevent them going below 0
+						let chitsStart = this.state.chitsStart;
+						let chitsCount = this.state.chitsCount;
+						console.log("DEBUG: chitsStart: " + chitsStart);
+						let newChitsStart = chitsStart - (chitsCount-1);
 						if(this.state.chitsStart >0)
 						{
-							if(this.state.chitsStart > 5)
+							if(this.state.chitsStart >= (chitsCount-1))
 							{
-								this.state.chitsStart -= 5;
+								console.log(newChitsStart);
+								this.getChits(newChitsStart).then();
 							}
 							else
 							{
-								this.state.chitsStart = 0;
+								//reset to 0
+								this.getChits(0).then();
 							}
 						}
-						this.getChits().then();
+
 					}}
 				/>
 				<Button
@@ -66,11 +82,15 @@ class ChitsPage extends Component
 					onPress={() =>
 					{
 						console.log("DEBUG: Button next pressed");
-
+						let chitsCount = this.state.chitsCount;
+						let chitsStart = this.state.chitsStart;
+						console.log("DEBUG: chitsStart: " + chitsStart);
+						let newChitsStart = chitsStart + (chitsCount -1);
 						if(this.state.chitNext === true)
 						{
-							this.state.chitsStart += this.state.chitsCount;
-							this.getChits().then();
+							//needs to be -1 due to the extra chit that isn't displayed
+							console.log(newChitsStart);
+							this.getChits(newChitsStart).then();
 						}
 						//else there's no more pages so do nothing
 					}}
@@ -103,16 +123,17 @@ class ChitsPage extends Component
 		</View>
 	);}
 
-	async getChits()
+	async getChits(newChitsStart)
 	{
 		console.log("DEBUG: Getting chits");
 
 		//will redirect if not logged in
 		this.getId();
+		this.setState({chitsStart: newChitsStart});
 
 		//needs one extra chit to see if there is another page
 		return fetch("http://10.0.2.2:3333/api/v0.0.5/chits?start=" +
-			this.state.chitsStart + "&count=" + this.state.chitsCount +1)
+			newChitsStart + "&count=" + this.state.chitsCount +1)
 		.then((response) =>
 		{
 			console.log("DEBUG: Response code: " + response.status);
@@ -169,6 +190,7 @@ class ChitsPage extends Component
 					{
 						title:image,
 						data:[chits[i].user.given_name,
+							chits[i].user.email,
 							chits[i].chit_content,
 							chits[i].location.longitude,
 							chits[i].location.latitude,
@@ -188,11 +210,9 @@ class ChitsPage extends Component
 					response.push(
 					{
 						title:image,
-						data:[chits[i].user.chit_content,
-						chits[i].user.given_name,
-						chits[i].user.family_name,
+						data:[chits[i].user.given_name,
 						chits[i].user.email,
-						chits[i].chit_content,
+						chits[i].user.chit_content,,
 						timeStamp]
 					});
 				}

@@ -13,13 +13,14 @@ class UpdateDetailsPage extends Component
 			given_name: '',
 			family_name: '',
 			email: '',
-			password: ''}
+			password: '',
+			error: ''}
 	}
 
 	render(){
 		return(
 			<View style={styles.container}>
-			<Text style={styles.error} >{this.state.registration}</Text>
+			<Text style={styles.error} >{this.state.error}</Text>
 			<TextInput
 				style={styles.Input}
 				onChangeText={forename => this.setState({given_name:forename})}
@@ -37,13 +38,25 @@ class UpdateDetailsPage extends Component
 			/>
 			<TextInput
 				style={styles.Input}
+				secureTextEntry={true}
 				onChangeText={password_data => this.setState({password:password_data})}
 				placeholder={"password"}
 			/>
 			<Button
 				style={styles.loginButton}
 				title='Update'
-				onPress={() => this.submitUpdate()}
+				onPress={() => {
+					//if any are empty return false
+					if(this.state.given_name.length && this.state.family_name.length &&
+						this.state.email.length && this.state.password.length)
+					{
+						this.submitUpdate().then();
+					}
+					else
+					{
+						this.setState({error:"Please fill in all details"});
+					}
+				}}
 			/>
 			</View>
 		);
@@ -87,8 +100,12 @@ class UpdateDetailsPage extends Component
 			}
 			else
 			{
+
 				console.log("DEBUG: Failed Response code: " + response.status);
-				this.setState({registration:'Failed to update account'});
+				if(response.status === 500)
+				{
+					this.setState({error:'Email already exists'});
+				}
 			}
 		})
 		 .catch((error) =>
@@ -133,20 +150,28 @@ const styles = StyleSheet.create(
 	{
 		container:
 		{
+			width: '80%',
+			marginLeft: 'auto',
+			marginRight: 'auto',
 			flex: 1,
+			marginBottom: 10,
 		},
 		loginButton:
 		{
 			margin: 20,
-			justifyContent: 'center'
+			justifyContent: 'center',
+			marginBottom: 10,
 		},
 		Input:
 		{
 			borderWidth: 1,
-			borderColor: '#777'
+			borderColor: '#777',
+			marginBottom: 10,
 		},
 		error:
 		{
-			color: "red"
+			marginLeft: 'auto',
+			marginRight: 'auto',
+			color: "red",
 		}
 	});

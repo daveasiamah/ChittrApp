@@ -46,7 +46,20 @@ class RegisterPage extends Component
 					<Button
 						style={styles.loginButton}
 						title='Sign Up'
-						onPress={() => this.submitLogin()}
+						onPress={() =>
+						{
+							//if any are empty return false
+							if(this.state.given_name.length && this.state.family_name.length &&
+								this.state.email.length && this.state.password.length)
+							{
+								this.submitLogin().then();
+							}
+							else
+							{
+								this.setState({error:"Please fill in all details"});
+							}
+						}}
+
 					/>
 					<Button
 						style={styles.loginButton}
@@ -91,7 +104,10 @@ class RegisterPage extends Component
 			else
 			{
 				console.log("Failed Response code: " + response);
-				this.setState({registration:'Failed to create account'});
+				if(response.status === 400)
+				{
+					this.setState({error: "Email address already exists"});
+				}
 			}
 		})
 		 .catch((error) =>
@@ -127,6 +143,8 @@ const styles = StyleSheet.create(
 			},
 		error:
 		{
+			marginLeft: 'auto',
+			marginRight: 'auto',
 			color: "red"
 		}
 	});
